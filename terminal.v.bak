@@ -1,0 +1,84 @@
+
+module terminal
+(
+   input    clk50,      // clock input 50 MHz
+   input    resetbtn,         
+
+	// консольный UART 
+   output   uart_tx,
+   input    uart_rx,
+	
+	// VGA
+	output   vgah, 
+   output   vgav, 
+   output   [4:0] vgar, 
+   output   [5:0] vgag, 
+   output   [4:0] vgab, 
+
+	// Buzzer
+	output   buzzer,
+	
+   // PS/2
+   input    ps2_clk, 
+   input    ps2_data
+
+);
+
+wire reset;
+
+wire terminal_tx;
+wire terminal_rx;
+wire sound;
+
+wire autoreset;
+reg [5:0]resetcnt;
+
+assign reset=~resetbtn | autoreset;
+assign buzzer=~sound;
+assign uart_tx=terminal_tx;
+assign terminal_rx=uart_rx;
+
+// VGA
+wire vgared,vgagreen,vgablue;
+
+// выбор яркости каждого цвета	
+assign vgag = (vgagreen == 1'b1) ? 6'b101111 : 6'b000000 ;
+assign vgab = (vgablue == 1'b1) ? 5'b11111 : 5'b00000 ;
+assign vgar = (vgared == 1'b1) ? 5'b11111 : 5'b00000 ;
+
+// А этот вариант для упрощенного подключения цветовых входов без DAC 
+//  прямо к выходным пинам FPGA
+//assign vgag = vgagreen;
+//assign vgab = vgablue;
+//assign vgar = vgared;
+
+
+//**********************************
+//*   Терминал VT52
+//**********************************
+vt52 terminal(
+   .vgahs(vgah), 
+   .vgavs(vgav), 
+	.vgared(vgared),
+	.vgagreen(vgagreen),
+	.vgablue(vgablue),
+   .tx(terminal_tx), 
+   .rx(terminal_rx), 
+   .ps2_clk(ps2_clk), 
+   .ps2_data(ps2_data), 
+	.buzzer(sound),
+   .clk50(clk50), 
+   .reset(reset)
+);
+
+//**********************************
+//*  Генерация начального сброса
+//**********************************
+assign autoreset= (&resetcnt)? 1'b0:1'b1;
+initial resetcnt=6'b000000;
+
+always @ (posedge clk50) 
+  if (resetcnt != 6'b111111) resetcnt <= resetcnt + 1'b1;
+
+
+endmodule
