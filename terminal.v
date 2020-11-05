@@ -25,18 +25,33 @@ module terminal
    input    ps2_data
 
 );
+wire [2:0] initspeed;
+
+//   Настройка начальной скорости интерфейса
+//---------------------------------------------
+//            0 - 1200
+//            1 - 2400
+//            2 - 4800
+//            3 - 9600
+//            4 - 19200
+//            5 - 38400
+//            6 - 57600
+//            7 - 115200
+assign initspeed=3'd5; // начальная скорость 38400
 
 wire reset;
 
 wire terminal_tx;
 wire terminal_rx;
-wire sound;
 
-wire autoreset;
-reg [5:0]resetcnt;
+wire sound;         // управление звуковым сигналом
+
+wire autoreset;     // автоматически генерируемый сброс
+reg [5:0]resetcnt;  // счетчик задержки формирователя сброса
 
 assign reset=~resetbtn | autoreset;  // сброс от кнопки и стартового таймера
 assign buzzer=~sound;                // выход управления звуком платы - инверсный (0-есть звук, 1-нет)
+
 // линии UART, идут на выход платы без преобразования
 assign uart_tx=terminal_tx;          
 assign terminal_rx=uart_rx;
@@ -83,6 +98,7 @@ vt52 terminal(
    .ps2_clk(ps2_clk),      // синхросигнал PS/2
    .ps2_data(ps2_data),    // данные PS/2
 	.buzzer(sound),         // разрешение звукового сигнала
+	.initspeed(initspeed),  // начальная скорость интерфейса
    .clk50(clk50),          // тактовый сигнал 50МГц
    .reset(reset)           // сброс терминала
 );

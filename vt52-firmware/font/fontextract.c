@@ -17,7 +17,7 @@ uint8_t font[3072];
 
 if (argc<2) {
     printf(" Программа предназначена для преобразования двоичного файла шрифтов в набор текстовых образов\n\
-Все образы складываются в каталог out/ под именем char-xx.fnt, xx - позиция шрифта в исходном файле\n\
+Все образы складываются в каталог out/ под именем xx.fnt, xx - позиция шрифта в исходном файле\n\
 Запуск: %s <font bin file> [code]\n\
 code - позиция исзвлекаемого символа, если не указано - извлекаются все символы\n",argv[0]);
     return;
@@ -42,7 +42,7 @@ if (argc > 2) sscanf(argv[2],"%x",&code);
 
 for(pos=0;pos<256;pos++) {
   if ((pos != code) && (code != -1)) continue;  
-  sprintf(filename,"out/char-%02x.fnt",pos);
+  sprintf(filename,"out/%02x.fnt",pos);
   out=fopen(filename,"w");
   for(y=0;y<12;y++) {
     for(x=0;x<8;x++) {

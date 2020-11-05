@@ -1,17 +1,24 @@
 //
-//  Терминал VT52, вариант с процессором 1801ВМ2
+//  Терминал VT52/15иэ-00-013
 //=======================================================================
 //
-// Начальная скорость последовательного порта
-`define SPEED 19200
+// Начальная скорость последовательного порта initspeed:
+//            000 - 1200
+//            001 - 2400
+//            010 - 4800
+//            011 - 9600
+//            100 - 19200
+//            101 - 38400
+//            110 - 57600
+//            111 - 115200
 
 module vt52 (
    // VGA
-   output vgahs,           // горизонтальная синхронизация
-   output vgavs,           // вертикальная синхронизация  
+   output vgahs,       // горизонтальная синхронизация
+   output vgavs,       // вертикальная синхронизация  
    output vgared,      // красный
-   output vgagreen,      // зеленый
-   output vgablue,      // синий
+   output vgagreen,    // зеленый
+   output vgablue,     // синий
 	
 	// последовательный порт
    output tx, 
@@ -25,6 +32,7 @@ module vt52 (
 	output buzzer,
 	
 	output [2:0] vspeed,   // индекс скорости порта
+	input [2:0] initspeed, // индекс начальной скорости
    input clk50,    // 50 MHz
    input reset     // сброс
 ); 
@@ -80,15 +88,15 @@ wire [15:0] vregs_dat;
 wire [15:0] ps2_dat;
 
 // линии прерывания 												
-wire			tx_irq, tx_iack;				//
-wire			rx_irq, rx_iack;				//
-wire			ps2_irq, ps2_iack;
-wire irq50;                
+wire	tx_irq, tx_iack;				
+wire	rx_irq, rx_iack;				
+wire	ps2_irq, ps2_iack;
+wire  irq50;                
 
 wire [12:0] cursor_adr;       // адрес курсора
 wire [15:0] vtcsr;            // регистр управления видеоконтроллером
 
-assign vspeed=vtcsr[7:5];
+assign vspeed=vtcsr[10:8];    // индекс скорости - извлекаем из регистра управления
 
 // переключатель локальной петли
 //   online        offline
@@ -182,7 +190,7 @@ assign  baud =
   (vspeed == 3'd4)  ?  32'd47:  // 19200
   (vspeed == 3'd5)  ?  32'd23:  // 38400
   (vspeed == 3'd6)  ?  32'd15:  // 57600
-                    32'd7;  // 115200
+                       32'd7;  // 115200
 
 wbc_uart #(.REFCLK(50000000)) uart
 (
@@ -226,22 +234,23 @@ vga video (
 	.wb_stb_i(vga_stb),
 	.wb_ack_o(vga_ack),
 	.wb_sel_i(wb_sel),
-   .cursor(cursor_adr), 
-   .vga_hsync(vgahs), 
-   .vga_vsync(vgavs), 
-   .vgag(vgagreen), 
-   .vgar(vgared), 
-   .vgab(vgablue), 
+   .cursor(cursor_adr),     // текущий адрес курсора
+   .vga_hsync(vgahs),       // строчный синхросигнал
+   .vga_vsync(vgavs),       // кадровый синхросигнал
+   .vgag(vgagreen),         // зеленый цвет
+   .vgar(vgared),           // красный цвет
+   .vgab(vgablue),          // синий цвет
 	.lmode(vtcsr[1]),        // режим 24/38 строк
 	.cursor_on(vtcsr[2]),    // видимость курсора
 	.cursor_type(vtcsr[3]),  // форма курсора
+	.flash(vtcsr[5]),        // импульсы мерцания символов
    .clk50mhz(clk50)
 );
 	
 //*******************************************************
 //*  Регистры курсора и управления видеоконтроллером
 //*******************************************************
-vregs #(.SPEED(`SPEED)) videoreg (
+vregs videoreg (
 	.wb_clk_i(wb_clk),
 	.wb_rst_i(sys_init),
 	.wb_adr_i(wb_adr),
@@ -252,8 +261,9 @@ vregs #(.SPEED(`SPEED)) videoreg (
 	.wb_stb_i(vregs_stb),
 	.wb_ack_o(vregs_ack),
 	.wb_sel_i(wb_sel),
-   .cursor(cursor_adr), 
-	.vtcsr(vtcsr)
+   .cursor(cursor_adr),   // регистр адреса курсора
+	.vtcsr(vtcsr),         // регистр управления
+	.initspeed(initspeed)  // константа начальной скорости
 ); 
 
 //**********************************

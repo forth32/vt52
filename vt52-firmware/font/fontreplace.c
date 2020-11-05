@@ -18,7 +18,7 @@ if (argc<2) {
     printf(" Программа для замены отдельных символов в двоичном шрифтовом файле.\n\
 Запуск: %s <font bin file> [code]\n\n\
 code - позиция заменяемого символа, если не указан - заменяются символы всех найденных файлов-образов\n\n\
-Файлы-образы должны лежать в текущем каталоге. Они имеют имя char-xx.fnt, где xx - hex-номер позиции символа\n\n",argv[0]);
+Файлы-образы должны лежать в текущем каталоге. Они имеют имя xx.fnt, где xx - hex-номер позиции символа\n\n",argv[0]);
     return;
 }    
 
@@ -42,7 +42,7 @@ fread(font,1,3072,in);
 
 for(pos=0;pos<256;pos++) {
   if (code != pos && code != -1) continue;  
-  sprintf(filename,"char-%02x.fnt",pos);
+  sprintf(filename,"%02x.fnt",pos);
   fch=fopen(filename,"r");
   if (fch == 0) {
       if (code != -1) {
