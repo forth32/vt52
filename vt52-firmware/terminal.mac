@@ -345,7 +345,7 @@ CHCONTROL:
         CMPB 	R0,#07          ; 07 - звуковой сигнал
         BNE     80$
         BIT     #ST$MUT,SYSFLAG ; звук разрешен?
-        BNE     80$             ; нет
+        BNE     CHCDONE          ; нет
         MOV 	#LSOUND,STIMER   ; взводим таймер
         BIS     #VC$SND,@#VTCSR  ; включаем звук
         BR 	    CHCDONE
